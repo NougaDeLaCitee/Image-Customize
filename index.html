@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Photo - Éditeur d'Images Avancé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bangers&family=Pacifico&family=Press+Start+2P&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <header class="bg-dark-900 border-b border-dark-800 px-6 py-4 flex items-center justify-between shadow-lg sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <i class="fa-solid fa-wand-magic-sparkles text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">PhotoStudio Pro</h1>
+                <p class="text-xs text-slate-400">Éditeur d'images interactif & créatif</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button id="btnReset" class="px-4 py-2 bg-dark-800 hover:bg-dark-700 text-slate-300 hover:text-white rounded-xl text-sm font-medium transition flex items-center space-x-2 border border-dark-700">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span class="hidden sm:inline">Réinitialiser</span>
+            </button>
+            <button id="btnDownload" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2 transform active:scale-95">
+                <i class="fa-solid fa-download"></i>
+                <span>Télécharger</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Sidebar: Tools Navigation & Panels -->
+        <div class="w-full lg:w-80 bg-dark-900 border-r border-dark-800 flex flex-col z-20 shadow-xl">
+            <!-- Tool Tabs -->
+            <div class="grid grid-cols-4 bg-dark-950 p-2 gap-1 border-b border-dark-800">
+                <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn py-2.5 px-2 rounded-lg text-xs font-semibold flex flex-col items-center justify-center transition bg-indigo-600 text-white">
+                    <i class="fa-solid fa-cloud-arrow-up text-base mb-1"></i>
+                    <span>Image</span>
+                </button>
+                <button onclick="switchTab('text')" id="tab-text" class="tab-btn py-2.5 px-2 rounded-lg text-xs font-semibold flex flex-col items-center justify-center transition text-slate-400 hover:text-white hover:bg-dark-800">
+                    <i class="fa-solid fa-font text-base mb-1"></i>
+                    <span>Texte</span>
+                </button>
+                <button onclick="switchTab('stickers')" id="tab-stickers" class="tab-btn py-2.5 px-2 rounded-lg text-xs font-semibold flex flex-col items-center justify-center transition text-slate-400 hover:text-white hover:bg-dark-800">
+                    <i class="fa-solid fa-face-smile text-base mb-1"></i>
+                    <span>Stickers</span>
+                </button>
+                <button onclick="switchTab('filters')" id="tab-filters" class="tab-btn py-2.5 px-2 rounded-lg text-xs font-semibold flex flex-col items-center justify-center transition text-slate-400 hover:text-white hover:bg-dark-800">
+                    <i class="fa-solid fa-sliders text-base mb-1"></i>
+                    <span>Filtres</span>
+                </button>
+            </div>
+
+            <!-- Panel Contents -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+
+                <!-- Upload Panel -->
+                <div id="panel-upload" class="panel space-y-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-1">Image Principale</h2>
+                        <p class="text-xs text-slate-400">Chargez l'image de fond à personnaliser</p>
+                    </div>
+                    <label class="border-2 border-dashed border-dark-700 hover:border-indigo-500 bg-dark-800/50 hover:bg-dark-800 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition group">
+                        <div class="w-12 h-12 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-image text-xl"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-200 mb-1">Parcourir les fichiers</span>
+                        <span class="text-xs text-slate-400">PNG, JPG, WEBP acceptés</span>
+                        <input type="file" id="imageLoader" accept="image/*" class="hidden">
+                    </label>
+
+                    <div class="pt-4 border-t border-dark-800">
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-1">Ajouter une Superposition</h2>
+                        <p class="text-xs text-slate-400">Ajouter une image par-dessus la création</p>
+                    </div>
+                    <label class="border border-dark-700 hover:border-indigo-500 bg-dark-800 rounded-xl p-3 flex items-center space-x-3 cursor-pointer transition">
+                        <div class="w-10 h-10 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center">
+                            <i class="fa-solid fa-plus"></i>
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-sm font-medium text-slate-200 block">Insérer une image calque</span>
+                            <span class="text-xs text-slate-400">Logo, cadre, badge...</span>
+                        </div>
+                        <input type="file" id="overlayLoader" accept="image/*" class="hidden">
+                    </label>
+                </div>
+
+                <!-- Text Panel -->
+                <div id="panel-text" class="panel hidden space-y-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-1">Ajouter du Texte</h2>
+                        <p class="text-xs text-slate-400">Personnalisez polices, couleurs et effets</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">Contenu du texte</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="textInput" placeholder="Votre texte ici..." class="flex-1 bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+                            <button id="btnAddText" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition shadow-md shadow-indigo-600/30">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="selectedTextSettings" class="space-y-4 pt-3 border-t border-dark-800 opacity-50 pointer-events-none transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Élément sélectionné</span>
+                            <button id="btnDeleteText" class="text-rose-400 hover:text-rose-300 text-xs flex items-center space-x-1">
+                                <i class="fa-solid fa-trash"></i>
+                                <span>Supprimer</span>
+                            </button>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Police d'écriture</label>
+                            <select id="textFont" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                                <option value="Inter">Inter (Moderne)</option>
+                                <option value="Bangers">Bangers (BD / Fun)</option>
+                                <option value="Pacifico">Pacifico (Manuscrite)</option>
+                                <option value="Press Start 2P">Pixel Art</option>
+                                <option value="Roboto Mono">Roboto Mono (Tech)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1.5">Couleur du texte</label>
+                                <div class="flex items-center space-x-2 bg-dark-950 border border-dark-700 rounded-xl p-1.5">
+                                    <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 rounded-lg border-0 bg-transparent cursor-pointer">
+                                    <span id="textColorVal" class="text-xs text-slate-300 font-mono">#FFFFFF</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1.5">Couleur d'ombre</label>
+                                <div class="flex items-center space-x-2 bg-dark-950 border border-dark-700 rounded-xl p-1.5">
+                                    <input type="color" id="textShadowColor" value="#000000" class="w-8 h-8 rounded-lg border-0 bg-transparent cursor-pointer">
+                                    <span id="textShadowVal" class="text-xs text-slate-300 font-mono">#000000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span class="font-semibold">Taille de police</span>
+                                <span id="textSizeVal">32px</span>
+                            </div>
+                            <input type="range" id="textSize" min="12" max="120" value="32" class="w-full accent-indigo-500 bg-dark-950 rounded-lg h-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stickers Panel -->
+                <div id="panel-stickers" class="panel hidden space-y-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-1">Stickers & Émojis</h2>
+                        <p class="text-xs text-slate-400">Cliquez pour ajouter un élément</p>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2.5" id="stickerContainer">
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🔥</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🚀</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">⭐</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">💖</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">😎</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🎉</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">👑</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🍕</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">💎</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🦄</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">🌈</button>
+                        <button class="sticker-btn bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-indigo-500 text-2xl p-3 rounded-xl transition flex items-center justify-center transform hover:scale-110">⚡</button>
+                    </div>
+                </div>
+
+                <!-- Filters Panel -->
+                <div id="panel-filters" class="panel hidden space-y-5">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider mb-1">Filtres & Ajustements</h2>
+                        <p class="text-xs text-slate-400">Modifiez l'apparence de l'image de fond</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span class="font-semibold">Luminosité</span>
+                                <span id="valBrightness">100%</span>
+                            </div>
+                            <input type="range" id="filterBrightness" min="0" max="200" value="100" class="w-full accent-indigo-500 bg-dark-950 rounded-lg h-2">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span class="font-semibold">Contraste</span>
+                                <span id="valContrast">100%</span>
+                            </div>
+                            <input type="range" id="filterContrast" min="0" max="200" value="100" class="w-full accent-indigo-500 bg-dark-950 rounded-lg h-2">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span class="font-semibold">Saturation</span>
+                                <span id="valSaturation">100%</span>
+                            </div>
+                            <input type="range" id="filterSaturation" min="0" max="200" value="100" class="w-full accent-indigo-500 bg-dark-950 rounded-lg h-2">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span class="font-semibold">Flou</span>
+                                <span id="valBlur">0px</span>
+                            </div>
+                            <input type="range" id="filterBlur" min="0" max="20" value="0" class="w-full accent-indigo-500 bg-dark-950 rounded-lg h-2">
+                        </div>
+
+                        <div class="pt-2 border-t border-dark-800 grid grid-cols-2 gap-2">
+                            <button id="btnGrayscale" class="py-2 px-3 bg-dark-800 hover:bg-dark-700 text-xs font-medium rounded-xl border border-dark-700 transition">N&B</button>
+                            <button id="btnInvert" class="py-2 px-3 bg-dark-800 hover:bg-dark-700 text-xs font-medium rounded-xl border border-dark-700 transition">Inverser</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="flex-1 bg-dark-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            <!-- Canvas Container -->
+            <div id="canvasWrapper" class="relative shadow-2xl rounded-2xl overflow-hidden max-w-full max-h-full border border-dark-800 bg-dark-900 flex items-center justify-center">
+                <canvas id="imageCanvas" class="max-w-full max-h-[75vh] object-contain block cursor-crosshair"></canvas>
+            </div>
+
+            <!-- Quick Info Footer inside workspace -->
+            <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between text-xs text-slate-500 pointer-events-none hidden sm:flex">
+                <span>Astuce : Glissez les éléments directement sur l'image pour les positionner.</span>
+                <span id="canvasDimensions">Aucune image chargée</span>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Tab Switching logic
+        function switchTab(tabName) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white');
+                b.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-dark-800');
+            });
+
+            document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('bg-indigo-600', 'text-white');
+            activeBtn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-dark-800');
+        }
+
+        // Application State
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let baseImage = null;
+        let overlayImage = null;
+
+        // Filters State
+        let filters = {
+            brightness: 100,
+            contrast: 100,
+            saturation: 100,
+            blur: 0,
+            grayscale: false,
+            invert: false
+        };
+
+        // Layers State (Texts and Stickers)
+        // types: 'text', 'sticker', 'overlay'
+        let layers = [];
+        let selectedLayerIndex = null;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        // Default Demo / Placeholder Image creation
+        function initDefaultCanvas() {
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            // Create gradient placeholder background
+            let grad = ctx.createLinearGradient(0, 0, 800, 600);
+            grad.addColorStop(0, '#3b82f6');
+            grad.addColorStop(1, '#8b5cf6');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 800, 600);
+
+            // Draw placeholder text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 40px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('Glissez ou uploadez une image', 400, 280);
+            ctx.font = '20px Inter';
+            ctx.fillText('Utilisez le panneau latéral pour customiser', 400, 330);
+
+            baseImage = new Image();
+            baseImage.src = canvas.toDataURL();
+            document.getElementById('canvasDimensions').innerText = '800 x 600 px';
+            redrawCanvas();
+        }
+
+        // Redraw complete canvas
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Base Image with filters
+            if (baseImage) {
+                ctx.save();
+                let filterStr = `brightness(${filters.brightness}%) contrast(${filters.contrast}%) saturate(${filters.saturation}%) blur(${filters.blur}px)`;
+                if (filters.grayscale) filterStr += ' grayscale(100%)';
+                if (filters.invert) filterStr += ' invert(100%)';
+                ctx.filter = filterStr;
+                ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // 2. Draw Layers (Texts, Stickers, Overlay image)
+            layers.forEach((layer, index) => {
+                ctx.save();
+                ctx.translate(layer.x, layer.y);
+                ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+                ctx.scale(layer.scale || 1, layer.scale || 1);
+
+                if (layer.type === 'text') {
+                    ctx.font = `${layer.weight || 'bold'} ${layer.size}px '${layer.font}', sans-serif`;
+                    ctx.fillStyle = layer.color;
+                    if (layer.shadowColor) {
+                        ctx.shadowColor = layer.shadowColor;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+                    }
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(layer.text, 0, 0);
+                } else if (layer.type === 'sticker') {
+                    ctx.font = `${layer.size || 60}px sans-serif`;
+                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(layer.content, 0, 0);
+                } else if (layer.type === 'overlay' && layer.img) {
+                    let w = layer.width || 200;
+                    let h = layer.height || 200;
+                    ctx.drawImage(layer.img, -w/2, -h/2, w, h);
+                }
+
+                // Draw Selection Border if selected
+                if (index === selectedLayerIndex) {
+                    ctx.strokeStyle = '#6366f1';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 6]);
+                    
+                    let bounds = getLayerBounds(layer);
+                    ctx.strokeRect(-bounds.w/2 - 10, -bounds.h/2 - 10, bounds.w + 20, bounds.h + 20);
+                }
+
+                ctx.restore();
+            });
+        }
+
+        // Approximate bounds for hit testing and selection outlines
+        function getLayerBounds(layer) {
+            if (layer.type === 'text') {
+                ctx.font = `bold ${layer.size}px '${layer.font}', sans-serif`;
+                let metrics = ctx.measureText(layer.text);
+                return { w: metrics.width, h: layer.size };
+            } else if (layer.type === 'sticker') {
+                let sz = layer.size || 60;
+                return { w: sz, h: sz };
+            } else if (layer.type === 'overlay') {
+                return { w: layer.width || 200, h: layer.height || 200 };
+            }
+            return { w: 100, h: 50 };
+        }
+
+        // Image Upload Handler
+        document.getElementById('imageLoader').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    baseImage = img;
+                    document.getElementById('canvasDimensions').innerText = `${img.width} x ${img.height} px`;
+                    redrawCanvas();
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Overlay Image Loader Handler
+        document.getElementById('overlayLoader').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    let maxDim = Math.min(canvas.width, canvas.height) * 0.4;
+                    let aspect = img.width / img.height;
+                    let w = maxDim;
+                    let h = maxDim / aspect;
+
+                    layers.push({
+                        type: 'overlay',
+                        img: img,
+                        x: canvas.width / 2,
+                        y: canvas.height / 2,
+                        width: w,
+                        height: h,
+                        scale: 1,
+                        rotation: 0
+                    });
+                    selectedLayerIndex = layers.length - 1;
+                    redrawCanvas();
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Add Text Action
+        document.getElementById('btnAddText').addEventListener('click', function() {
+            const textInput = document.getElementById('textInput');
+            const val = textInput.value.trim();
+            if (!val) return;
+
+            layers.push({
+                type: 'text',
+                text: val,
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                size: 48,
+                font: 'Inter',
+                color: '#ffffff',
+                shadowColor: '#000000',
+                scale: 1,
+                rotation: 0
+            });
+
+            textInput.value = '';
+            selectedLayerIndex = layers.length - 1;
+            updateTextPanelState();
+            redrawCanvas();
+            switchTab('text');
+        });
+
+        // Add Sticker Action
+        document.querySelectorAll('.sticker-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const emoji = this.innerText;
+                layers.push({
+                    type: 'sticker',
+                    content: emoji,
+                    x: canvas.width / 2 + (Math.random() * 100 - 50),
+                    y: canvas.height / 2 + (Math.random() * 100 - 50),
+                    size: 80,
+                    scale: 1,
+                    rotation: 0
+                });
+                selectedLayerIndex = layers.length - 1;
+                redrawCanvas();
+            });
+        });
+
+        // Canvas Mouse / Touch Interaction for Dragging Layers
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            // Calculate scale ratio between CSS display size and actual canvas resolution
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        canvas.addEventListener('mousedown', startDrag);
+        canvas.addEventListener('touchstart', startDrag, { passive: true });
+
+        function startDrag(e) {
+            const coords = getCanvasCoords(e);
+            
+            // Check layers in reverse order (topmost first)
+            let foundIndex = -1;
+            for (let i = layers.length - 1; i >= 0; i--) {
+                const layer = layers[i];
+                const bounds = getLayerBounds(layer);
+                const dx = coords.x - layer.x;
+                const dy = coords.y - layer.y;
+                // Simple hit box check
+                if (Math.abs(dx) < bounds.w / 2 + 20 && Math.abs(dy) < bounds.h / 2 + 20) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            selectedLayerIndex = foundIndex;
+            if (selectedLayerIndex !== -1) {
+                isDragging = true;
+                startX = coords.x - layers[selectedLayerIndex].x;
+                startY = coords.y - layers[selectedLayerIndex].y;
+                updateTextPanelState();
+            } else {
+                updateTextPanelState();
+            }
+            redrawCanvas();
+        }
+
+        window.addEventListener('mousemove', drag);
+        window.addEventListener('touchmove', drag, { passive: true });
+
+        function drag(e) {
+            if (!isDragging || selectedLayerIndex === null) return;
+            const coords = getCanvasCoords(e);
+            layers[selectedLayerIndex].x = coords.x - startX;
+            layers[selectedLayerIndex].y = coords.y - startY;
+            redrawCanvas();
+        }
+
+        window.addEventListener('mouseup', stopDrag);
+        window.addEventListener('touchend', stopDrag);
+
+        function stopDrag() {
+            isDragging = false;
+        }
+
+        // Text Panel Form Bindings
+        const textSettingsContainer = document.getElementById('selectedTextSettings');
+        function updateTextPanelState() {
+            if (selectedLayerIndex !== null && layers[selectedLayerIndex] && layers[selectedLayerIndex].type === 'text') {
+                textSettingsContainer.classList.remove('opacity-50', 'pointer-events-none');
+                const layer = layers[selectedLayerIndex];
+                document.getElementById('textFont').value = layer.font;
+                document.getElementById('textColor').value = layer.color;
+                document.getElementById('textColorVal').innerText = layer.color.toUpperCase();
+                document.getElementById('textShadowColor').value = layer.shadowColor || '#000000';
+                document.getElementById('textShadowVal').innerText = (layer.shadowColor || '#000000').toUpperCase();
+                document.getElementById('textSize').value = layer.size;
+                document.getElementById('textSizeVal').innerText = layer.size + 'px';
+            } else {
+                textSettingsContainer.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        document.getElementById('textFont').addEventListener('change', (e) => {
+            if (selectedLayerIndex !== null && layers[selectedLayerIndex]?.type === 'text') {
+                layers[selectedLayerIndex].font = e.target.value;
+                redrawCanvas();
+            }
+        });
+
+        document.getElementById('textColor').addEventListener('input', (e) => {
+            if (selectedLayerIndex !== null && layers[selectedLayerIndex]?.type === 'text') {
+                layers[selectedLayerIndex].color = e.target.value;
+                document.getElementById('textColorVal').innerText = e.target.value.toUpperCase();
+                redrawCanvas();
+            }
+        });
+
+        document.getElementById('textShadowColor').addEventListener('input', (e) => {
+            if (selectedLayerIndex !== null && layers[selectedLayerIndex]?.type === 'text') {
+                layers[selectedLayerIndex].shadowColor = e.target.value;
+                document.getElementById('textShadowVal').innerText = e.target.value.toUpperCase();
+                redrawCanvas();
+            }
+        });
+
+        document.getElementById('textSize').addEventListener('input', (e) => {
+            if (selectedLayerIndex !== null && layers[selectedLayerIndex]?.type === 'text') {
+                layers[selectedLayerIndex].size = parseInt(e.target.value);
+                document.getElementById('textSizeVal').innerText = e.target.value + 'px';
+                redrawCanvas();
+            }
+        });
+
+        document.getElementById('btnDeleteText').addEventListener('click', () => {
+            if (selectedLayerIndex !== null) {
+                layers.splice(selectedLayerIndex, 1);
+                selectedLayerIndex = null;
+                updateTextPanelState();
+                redrawCanvas();
+            }
+        });
+
+        // Filters Bindings
+        function setupFilterBinding(id, filterKey, unit = '') {
+            const el = document.getElementById(id);
+            el.addEventListener('input', (e) => {
+                filters[filterKey] = e.target.value;
+                document.getElementById('val' + id.replace('filter', '')).innerText = e.target.value + unit;
+                redrawCanvas();
+            });
+        }
+
+        setupFilterBinding('filterBrightness', 'brightness', '%');
+        setupFilterBinding('filterContrast', 'contrast', '%');
+        setupFilterBinding('filterSaturation', 'saturation', '%');
+        setupFilterBinding('filterBlur', 'blur', 'px');
+
+        document.getElementById('btnGrayscale').addEventListener('click', function() {
+            filters.grayscale = !filters.grayscale;
+            this.classList.toggle('bg-indigo-600', filters.grayscale);
+            this.classList.toggle('text-white', filters.grayscale);
+            redrawCanvas();
+        });
+
+        document.getElementById('btnInvert').addEventListener('click', function() {
+            filters.invert = !filters.invert;
+            this.classList.toggle('bg-indigo-600', filters.invert);
+            this.classList.toggle('text-white', filters.invert);
+            redrawCanvas();
+        });
+
+        // Reset All
+        document.getElementById('btnReset').addEventListener('click', () => {
+            filters = { brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: false, invert: false };
+            document.getElementById('filterBrightness').value = 100;
+            document.getElementById('valBrightness').innerText = '100%';
+            document.getElementById('filterContrast').value = 100;
+            document.getElementById('valContrast').innerText = '100%';
+            document.getElementById('filterSaturation').value = 100;
+            document.getElementById('valSaturation').innerText = '100%';
+            document.getElementById('filterBlur').value = 0;
+            document.getElementById('valBlur').innerText = '0px';
+            document.getElementById('btnGrayscale').classList.remove('bg-indigo-600', 'text-white');
+            document.getElementById('btnInvert').classList.remove('bg-indigo-600', 'text-white');
+            layers = [];
+            selectedLayerIndex = null;
+            updateTextPanelState();
+            initDefaultCanvas();
+        });
+
+        // Download Image
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            // Unselect layer temporarily to avoid rendering selection border in download
+            const oldSelection = selectedLayerIndex;
+            selectedLayerIndex = null;
+            redrawCanvas();
+
+            const link = document.createElement('a');
+            link.download = 'photostudio-creation.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            // Restore selection
+            selectedLayerIndex = oldSelection;
+            redrawCanvas();
+        });
+
+        // Initial launch
+        window.onload = function() {
+            initDefaultCanvas();
+        };
+    </script>
+</body>
+</html>
